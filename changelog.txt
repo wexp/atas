@@ -1,0 +1,20 @@
+ATAS changelog
+
+-- 18.01.2016
+-- v0.12
+* Removed more old code.
+* Cleaned up main loop code.
+
+-- 18.01.2016
+-- v0.11
+* Separated heater function.
+* Changed some conditionals for readability.
+* Changed timer menu to check input.
+* Changed the way the mode menu takes input.
+* Improved timer controls.
+
+-- 17.01.2016
+-- v0.1
+* Added simple menu interface via serial communications.
+* Added support for changing temperatures, modes, and set a timer.
+* Cleaned up unused functions and localized some variables.

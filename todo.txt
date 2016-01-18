@@ -1,0 +1,10 @@
+ATAS todolist!
+
+! Condense menus to a coherent format for multiple rooms.
+! Create system for separate rooms.
+! Add support for multiple sensors and heaters.
+! Change modes to modular units.
+! Design a more robust menu system.
+! Add support for Micro OLED.
+! Add framework for network communications.
+! Minimize and compress the use of static strings.
