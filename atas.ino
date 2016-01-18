@@ -17,11 +17,6 @@ float temp_night = 18.0;
 float temp_away = 12.0;
 
 const byte led = 13; 
-/*
-const byte SSlatchPin = 10;
-const byte SSclockPin = 9;
-const byte SSdataPin = 8;
-*/
 const byte radPin = 2;
 byte mode;
 byte nextmode;
@@ -30,15 +25,10 @@ HTU21D tempsens;
 RBD::Timer timer0;
 RBD::Timer timer1;
 RBD::Timer timer_check;
-const int numbers[] = {B10000001,B11110011,B01001001,B01100001,B00110011,B00100101,B00000101,B11110001,B00000001,B00110001};
 float temp_set;
-char status;
 boolean timerset = false;
 
 void setup() {
-//  pinMode(SSlatchPin, OUTPUT);
-//  pinMode(SSclockPin, OUTPUT);
-//  pinMode(SSdataPin, OUTPUT);
   pinMode(led, OUTPUT);
   pinMode(radPin, OUTPUT);
   Serial.begin(115200);
@@ -50,6 +40,10 @@ void setup() {
 }
 
 void loop() {
+/*
+Ideally, the main loop should only be checking timers and acting
+if there is anything to do.
+*/
   if(timer_check.isExpired()) {
     timer_check.restart();
     digitalWrite(led, HIGH);
@@ -58,59 +52,7 @@ void loop() {
   }
 
   if(timer0.onExpired()) {
-    timer0.restart();
-    ansiHome();
-    Serial.println(F("ATAS running. Press a number to change operating mode."));
-    Serial.print(F("Time: "));
-    Serial.print(hour());
-    Serial.print(F(":"));
-    Serial.print(minute());
-    ansiTab();
-    Serial.print(day());
-    Serial.print(F("."));
-    Serial.print(month());
-    Serial.print(F("."));
-    Serial.println(year());
-    Serial.println(F("1.Temperatures  2.Timers  3. Schedules (N/A)  4.Modes  5.Set time"));
-    Serial.println();
-    if(timerset) {
-      Serial.print(F("Timer activated, next mode will be: "));
-      ansiTab();
-      switch (nextmode) {
-        case 0: { Serial.println(F("Normal")); break; }
-        case 1: { Serial.println(F("Night")); break; }
-        case 2: { Serial.println(F("Away")); break; }
-//    unsigned int minutes_left;
-//    minutes_left = timer1.getInverseValue() / 60000;
-      Serial.print(F("Time left:"));
-      ansiTab();
-      ansiTab();
-      ansiTab();
-      ansiTab();
-      Serial.println(timer1.getInverseValue() / 60000);
-    }
-    Serial.print(F("Current temperature: "));
-    ansiTab();
-    ansiTab();
-    ansiTab();
-    Serial.println(temp);
-    Serial.print(F("Target temperature:"));
-    ansiTab();
-    ansiTab();
-    ansiTab();
-    switch (mode) {
-      case 0: { Serial.println(temp_norm); break; }
-      case 1: { Serial.println(temp_night); break; }
-      case 2: { Serial.println(temp_away); break; }
-    Serial.print(F("Current mode: "));
-    ansiTab();
-    ansiTab();
-    ansiTab();
-    ansiTab();
-    switch (mode) {
-      case 0: { Serial.println(F("Normal")); break; }
-      case 1: { Serial.println(F("Night")); break; }
-      case 2: { Serial.println(F("Away")); break; }
+    mainmenu();
   }
 
   if(timer1.onExpired()) {
@@ -119,27 +61,8 @@ void loop() {
     timer1.stop();
   }
   
-  while (Serial.available()) {
-    status = Serial.read();
-    switch(status) {
-      case 0x31:
-        menutemps();
-        break;
-      case 0x32:
-        menutimers();
-        break;
-      case 0x33:
-        menusched();
-        break;
-      case 0x34:
-        menumode();
-        break;
-      case 0x35:
-        menusettime();
-        break;
-      default:
-        break;
-    }
+  if(Serial.available()) {
+    checkSerial();
   }
 
   switch (mode) {
@@ -147,6 +70,19 @@ void loop() {
   case 1: { fire(temp_night); break; }
   case 2: { fire(temp_away); break; }
 }
+
+/*
+-- EXPERIMENTAL CODE FOR ROOM --
+byte mode;
+byte room[9];
+byte sensor[9];
+byte heater[9];
+
+fire(byte room, byte sensor, byte heater, byte mode) {
+  float in_temp;
+  in_temp = sensor[sensor].readTemperature();
+}
+*/
 
 void fire(float fire_temp) {
   if(temp <= fire_temp) {
@@ -326,6 +262,86 @@ void menusettime() {
   Serial.println(F("Enter UNIX time:"));
   setTime(getLong());
   ansiClear();
+}
+
+void mainmenu() {
+    timer0.restart();
+    ansiHome();
+    Serial.println(F("ATAS running. Press a number to change operating mode."));
+    Serial.print(F("Time: "));
+    Serial.print(hour());
+    Serial.print(F(":"));
+    Serial.print(minute());
+    ansiTab();
+    Serial.print(day());
+    Serial.print(F("."));
+    Serial.print(month());
+    Serial.print(F("."));
+    Serial.println(year());
+    Serial.println(F("1.Temperatures  2.Timers  3. Schedules (N/A)  4.Modes  5.Set time"));
+    Serial.println();
+    if(timerset) {
+      Serial.print(F("Timer activated, next mode will be: "));
+      ansiTab();
+      switch (nextmode) {
+        case 0: { Serial.println(F("Normal")); break; }
+        case 1: { Serial.println(F("Night")); break; }
+        case 2: { Serial.println(F("Away")); break; }
+//    unsigned int minutes_left;
+//    minutes_left = timer1.getInverseValue() / 60000;
+      Serial.print(F("Time left:"));
+      ansiTab();
+      ansiTab();
+      ansiTab();
+      ansiTab();
+      Serial.println(timer1.getInverseValue() / 60000);
+    }
+    Serial.print(F("Current temperature: "));
+    ansiTab();
+    ansiTab();
+    ansiTab();
+    Serial.println(temp);
+    Serial.print(F("Target temperature:"));
+    ansiTab();
+    ansiTab();
+    ansiTab();
+    switch (mode) {
+      case 0: { Serial.println(temp_norm); break; }
+      case 1: { Serial.println(temp_night); break; }
+      case 2: { Serial.println(temp_away); break; }
+    Serial.print(F("Current mode: "));
+    ansiTab();
+    ansiTab();
+    ansiTab();
+    ansiTab();
+    switch (mode) {
+      case 0: { Serial.println(F("Normal")); break; }
+      case 1: { Serial.println(F("Night")); break; }
+      case 2: { Serial.println(F("Away")); break; }
+}
+
+void checkSerial() {
+    char status;
+    status = Serial.read();
+    switch(status) {
+      case 0x31:
+        menutemps();
+        break;
+      case 0x32:
+        menutimers();
+        break;
+      case 0x33:
+        menusched();
+        break;
+      case 0x34:
+        menumode();
+        break;
+      case 0x35:
+        menusettime();
+        break;
+      default:
+        break;
+    }
 }
 
 void ansiClear()
