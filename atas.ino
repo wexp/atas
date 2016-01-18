@@ -1,3 +1,10 @@
+/*
+Automatic Temperature Adjustment System, development version
+2015-2016 Erlend Arnesen
+Documentation TBD
+v0.11 DEV
+*/
+
 #include <Time.h>
 #include <TimeLib.h>
 
@@ -69,23 +76,18 @@ void loop() {
     if(timerset) {
       Serial.print(F("Timer activated, next mode will be: "));
       ansiTab();
-      if(nextmode == 0) {
-        Serial.println(F("Normal"));
-      }
-      if(nextmode == 1) {
-        Serial.println(F("Night"));
-      }
-      if(nextmode == 2) {
-        Serial.println(F("Away"));
-      }
-      unsigned int minutes_left;
-      minutes_left = timer1.getInverseValue() / 60000;
+      switch (nextmode) {
+        case 0: { Serial.println(F("Normal")); break; }
+        case 1: { Serial.println(F("Night")); break; }
+        case 2: { Serial.println(F("Away")); break; }
+//    unsigned int minutes_left;
+//    minutes_left = timer1.getInverseValue() / 60000;
       Serial.print(F("Time left:"));
       ansiTab();
       ansiTab();
       ansiTab();
       ansiTab();
-      Serial.println(minutes_left);
+      Serial.println(timer1.getInverseValue() / 60000);
     }
     Serial.print(F("Current temperature: "));
     ansiTab();
@@ -96,39 +98,25 @@ void loop() {
     ansiTab();
     ansiTab();
     ansiTab();
-    if(mode == 0) {
-      Serial.println(temp_norm);
-    }
-    if(mode == 1) {
-      Serial.println(temp_night);
-    }
-    if(mode == 2) {
-      Serial.println(temp_away);
-    }
+    switch (mode) {
+      case 0: { Serial.println(temp_norm); break; }
+      case 1: { Serial.println(temp_night); break; }
+      case 2: { Serial.println(temp_away); break; }
     Serial.print(F("Current mode: "));
     ansiTab();
     ansiTab();
     ansiTab();
     ansiTab();
-    if(mode == 0) {
-      Serial.println(F("Normal"));
-    }
-    if(mode == 1) {
-      Serial.println(F("Night"));
-    }
-    if(mode == 2) {
-      Serial.println(F("Away"));
-    }
-    if(radPin == HIGH) {
-      Serial.println(F("HEATING"));
-    }
-    else if(radPin == LOW) {
-      Serial.println(F("NOT HEATING"));
-    }
+    switch (mode) {
+      case 0: { Serial.println(F("Normal")); break; }
+      case 1: { Serial.println(F("Night")); break; }
+      case 2: { Serial.println(F("Away")); break; }
   }
 
   if(timer1.onExpired()) {
     mode = nextmode;
+    timerset = false;
+    timer1.stop();
   }
   
   while (Serial.available()) {
@@ -154,29 +142,18 @@ void loop() {
     }
   }
 
-  if(mode == 0) {
-    if(temp <= temp_norm) {
-      digitalWrite(radPin, HIGH);
-    }
-    else {
-      digitalWrite(radPin, LOW);
-    }
+  switch (mode) {
+  case 0: { fire(temp_norm); break; }
+  case 1: { fire(temp_night); break; }
+  case 2: { fire(temp_away); break; }
+}
+
+void fire(float fire_temp) {
+  if(temp <= fire_temp) {
+    digitalWrite(radPin, HIGH);
   }
-  if(mode == 1) {
-    if(temp <= temp_night) {
-      digitalWrite(radPin, HIGH);
-    }
-    else {
-      digitalWrite(radPin, LOW);
-    }
-  }
-  if(mode == 2) {
-    if(temp <= temp_away) {
-      digitalWrite(radPin, HIGH);
-    }
-    else {
-      digitalWrite(radPin, LOW);
-    }
+  else {
+    digitalWrite(radPin, LOW);
   }
 }
 
@@ -255,57 +232,23 @@ void menutemps() {
 }
 
 void menutimers() {
-//  boolean nowdone = false;
   boolean timeoutdone = false;
   boolean afterdone = false;
   char choice;
-/*  while (!nowdone) {
-    ansiClear();
-    ansiHome();
-    Serial.println(F("To set a timer, select desired current mode."));
-    Serial.println(F("1 is normal, 2 is night, 3 is away."));
-    Serial.println(F("Otherwise press x to exit, d to clear all timers."));
-    choice = 0;
-    choice = getSingleChar() - 0;
-    switch (choice) {
-      default:
-        choice = 0;
-        break;
-      case 0x31:
-        mode = 0;
-        nowdone = true;
-        break;
-      case 0x32:
-        mode = 1;
-        nowdone = true;
-        break;
-      case 0x33:
-        mode = 2;
-        nowdone = true;
-        break;
-      case 0x78:
-        nowdone = true;
-        timeoutdone = true;
-        afterdone = true;
-        break;
-      case 0x64:
-        timer0.setTimeout(1);
-        nowdone = true;
-        timeoutdone = true;
-        afterdone = true;
-        timerset = false;
-        break;
-    }
-  }*/
   while (!timeoutdone) {
     unsigned long _timerset;
     ansiClear();
     ansiHome();
     Serial.println(F("Set timeout in hours:"));
     _timerset = getLong();
-    timer1.setTimeout(_timerset * 3600000);
-    timeoutdone = true;
-    timer1.restart();
+    if(_timerset >= 0 || _timerset <= 86400000) {
+      timer1.setTimeout(_timerset * 3600000);
+      timeoutdone = true;
+      timer1.restart();
+    }
+    else {
+    Serial.println(F("Error, must be between 0 and 24 hours."));
+    }
   }
   while (!afterdone) {
     ansiClear();
@@ -331,7 +274,7 @@ void menutimers() {
         afterdone = true;
         break;
     }
-    if(!timer1.isExpired()) {
+    if(!timer1.isExpired() || !timer1.isStopped()) {
       timerset = true;
      }
   }
@@ -347,6 +290,10 @@ void menumode() {
     Serial.println(F("1 is normal, 2 is night, 3 is away."));
     choice = 0;
     choice = getSingleChar() - 0;
+    if(choice == 0 || choice == 1 || choice == 2) {
+      mode = choice;
+    }
+/*
     switch (choice) {
       default:
       choice = 0;
@@ -364,6 +311,8 @@ void menumode() {
       done = true;
       break;
     }
+*/
+
   }
   ansiClear();
 }
@@ -378,21 +327,6 @@ void menusettime() {
   setTime(getLong());
   ansiClear();
 }
-
-/*void SSDisplayActualTemp() {
-  int inttemp = (int) temp;
-
-  if(inttemp >= 30) {
-    inttemp = inttemp - 30; }
-  else if(inttemp >= 20) {
-    inttemp = inttemp - 20; }
-  else if(inttemp >= 10) {
-    inttemp = inttemp - 10; }
-
-  digitalWrite(SSlatchPin, LOW);
-  shiftOut(SSdataPin, SSclockPin, MSBFIRST, numbers[inttemp]);
-  digitalWrite(SSlatchPin, HIGH);
-}*/
 
 void ansiClear()
 // send ANSI clear screen command
