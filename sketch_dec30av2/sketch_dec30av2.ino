@@ -129,6 +129,7 @@ void loop() {
 
   if(timer1.onExpired()) {
     mode = nextmode;
+    timerset = false;
   }
   
   while (Serial.available()) {
@@ -247,7 +248,7 @@ void menutemps() {
         {
         Serial.println(F("Error, must be between 0.0 and 30.0."));
         }  
-      case 0x78:
+      case 'x':
         done = true;
         break;
       }
