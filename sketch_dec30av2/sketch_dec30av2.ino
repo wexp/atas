@@ -29,13 +29,16 @@ void setup() {
   timer0.restart();
   timer_check.setTimeout(30000);
   timer_check.restart();
+  temp_act = tempsens.readTemperature();
 }
 
 void loop() {
   if(timer_check.isExpired()) {
     timer_check.restart();
     temp_act = tempsens.readTemperature();
-    getAvgTemp( temp_act, temp );
+    if( temp_act != 998 || temp_act != 999 ) {
+      getAvgTemp( temp_act, temp );
+    }
   }
   
   if(timer0.onExpired()) {
@@ -72,10 +75,9 @@ void loop() {
       unsigned int minutes_left;
       minutes_left = timer1.getInverseValue() / 60000;
       Serial.print(F("Time left:"));
-      ansiTab();
-      ansiTab();
-      ansiTab();
-      ansiTab();
+      for( i=0; i==3; i++) {
+        Serial.write(9);
+      }
       Serial.println(minutes_left);
     }
     Serial.print(F("Current temperature: "));
