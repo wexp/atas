@@ -1,37 +1,26 @@
 #include <Time.h>
 #include <TimeLib.h>
-
 #include <HTU21D.h>
-#include <Wire.h>
 #include <RBD_Timer.h>
 
 float temp_norm = 23.0;
 float temp_night = 18.0;
 float temp_away = 12.0;
+float temp_act = 0.0;
+float temp = 0.0;
 
 const byte led = 13; 
-/*
-const byte SSlatchPin = 10;
-const byte SSclockPin = 9;
-const byte SSdataPin = 8;
-*/
 const byte radPin = 2;
 byte mode;
 byte nextmode;
-float temp = 0;
+
 HTU21D tempsens;
 RBD::Timer timer0;
 RBD::Timer timer1;
 RBD::Timer timer_check;
-const int numbers[] = {B10000001,B11110011,B01001001,B01100001,B00110011,B00100101,B00000101,B11110001,B00000001,B00110001};
-float temp_set;
-char status;
 boolean timerset = false;
 
 void setup() {
-//  pinMode(SSlatchPin, OUTPUT);
-//  pinMode(SSclockPin, OUTPUT);
-//  pinMode(SSdataPin, OUTPUT);
   pinMode(led, OUTPUT);
   pinMode(radPin, OUTPUT);
   Serial.begin(115200);
@@ -45,13 +34,15 @@ void setup() {
 void loop() {
   if(timer_check.isExpired()) {
     timer_check.restart();
-    digitalWrite(led, HIGH);
-    temp = tempsens.readTemperature();
-    digitalWrite(led, LOW);
+    temp_act = tempsens.readTemperature();
+    getAvgTemp( temp_act, temp );
   }
-
+  
   if(timer0.onExpired()) {
     timer0.restart();
+    if( timer_check.isExpired() ) {
+      ansiClear();
+    }
     ansiHome();
     Serial.println(F("ATAS running. Press a number to change operating mode."));
     Serial.print(F("Time: "));
@@ -119,20 +110,16 @@ void loop() {
     if(mode == 2) {
       Serial.println(F("Away"));
     }
-    if(radPin == HIGH) {
-      Serial.println(F("HEATING"));
-    }
-    else if(radPin == LOW) {
-      Serial.println(F("NOT HEATING"));
-    }
   }
 
   if(timer1.onExpired()) {
     mode = nextmode;
     timerset = false;
+    ansiClear();
   }
   
   while (Serial.available()) {
+    char status;
     status = Serial.read();
     switch(status) {
       case 0x31:
@@ -154,31 +141,34 @@ void loop() {
         break;
     }
   }
+  switch( mode ) {
+    case 0:
+      fire( temp_norm, temp );
+      break;
+    case 1:
+      fire( temp_night, temp );
+      break;
+    case 2:
+      fire( temp_night, temp );
+      break;
+  }
+}
 
-  if(mode == 0) {
-    if(temp <= temp_norm) {
-      digitalWrite(radPin, HIGH);
-    }
-    else {
-      digitalWrite(radPin, LOW);
-    }
+void fire( float target_temp, float temp ) {
+  if( temp <= target_temp) {
+    digitalWrite(radPin, HIGH);
+    digitalWrite(led, HIGH);
   }
-  if(mode == 1) {
-    if(temp <= temp_night) {
-      digitalWrite(radPin, HIGH);
-    }
-    else {
-      digitalWrite(radPin, LOW);
-    }
+  else {
+    digitalWrite(radPin, LOW);
+    digitalWrite(led, LOW);
   }
-  if(mode == 2) {
-    if(temp <= temp_away) {
-      digitalWrite(radPin, HIGH);
-    }
-    else {
-      digitalWrite(radPin, LOW);
-    }
-  }
+}
+
+float getAvgTemp( float in_temp, float avg_temp ) {
+  avg_temp -= avg_temp/5.0;
+  avg_temp += in_temp/5.0;
+  return avg_temp;
 }
 
 void menutemps() {
@@ -186,7 +176,6 @@ void menutemps() {
   char choice;
   while (!done) { 
     long temptemp = 0;
-    status = 0;
     ansiClear();
     ansiHome();
     Serial.print(F("1. Normal temperature:"));
@@ -321,14 +310,17 @@ void menutimers() {
         break;
       case 0x31:
         nextmode = 0;
+        ansiClear();
         afterdone = true;
         break;
       case 0x32:
         nextmode = 1;
+        ansiClear();
         afterdone = true;
         break;
       case 0x33:
         nextmode = 2;
+        ansiClear();
         afterdone = true;
         break;
     }
@@ -354,14 +346,17 @@ void menumode() {
       break;
     case 0x31:
       mode = 0;
+      ansiClear();
       done = true;
       break;
     case 0x32:
       mode = 1;
+      ansiClear();
       done = true;
       break;
     case 0x33:
       mode = 2;
+      ansiClear();
       done = true;
       break;
     }
@@ -375,25 +370,11 @@ void menusched() {
 
 void menusettime() {
   ansiClear();
+  ansiHome();
   Serial.println(F("Enter UNIX time:"));
   setTime(getLong());
   ansiClear();
 }
-
-/*void SSDisplayActualTemp() {
-  int inttemp = (int) temp;
-
-  if(inttemp >= 30) {
-    inttemp = inttemp - 30; }
-  else if(inttemp >= 20) {
-    inttemp = inttemp - 20; }
-  else if(inttemp >= 10) {
-    inttemp = inttemp - 10; }
-
-  digitalWrite(SSlatchPin, LOW);
-  shiftOut(SSdataPin, SSclockPin, MSBFIRST, numbers[inttemp]);
-  digitalWrite(SSlatchPin, HIGH);
-}*/
 
 void ansiClear()
 // send ANSI clear screen command
