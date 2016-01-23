@@ -31,7 +31,7 @@ void setup() {
   timer_check.restart();
   temp_act = tempsens.readTemperature();
   temp = temp_act;
-  if( temp_act != 998 || temp_act != 999 ) {
+  if( temp_act != 998 && temp_act != 999 ) {
     for( int i=0; i==4; i++) {
       temp = getAvgTemp( temp_act, temp );
     }
@@ -42,7 +42,7 @@ void loop() {
   if(timer_check.isExpired()) {
     timer_check.restart();
     temp_act = tempsens.readTemperature();
-    if( temp_act != 998 || temp_act != 999 ) {
+    if( temp_act != 998 && temp_act != 999 ) {
       temp = getAvgTemp( temp_act, temp );
     }
   }
