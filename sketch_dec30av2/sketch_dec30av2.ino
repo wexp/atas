@@ -35,7 +35,7 @@ void loop() {
   if(timer_check.isExpired()) {
     timer_check.restart();
     temp_act = tempsens.readTemperature();
-    getAvgTemp( temp_act, temp );
+    temp = getAvgTemp( temp_act, temp );
   }
   
   if(timer0.onExpired()) {
@@ -166,8 +166,8 @@ void fire( float target_temp, float temp ) {
 }
 
 float getAvgTemp( float in_temp, float avg_temp ) {
-  avg_temp -= avg_temp/5.0;
-  avg_temp += in_temp/5.0;
+  avg_temp -= avg_temp/5;
+  avg_temp += in_temp/5;
   return avg_temp;
 }
 
