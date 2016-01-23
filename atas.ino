@@ -50,12 +50,6 @@ void setup() {
 }
 
 void loop() {
-  if(timer_check.isExpired()) {
-    timer_check.restart();
-    digitalWrite(led, HIGH);
-    temp = tempsens.readTemperature();
-    digitalWrite(led, LOW);
-  }
 
   if(timer0.onExpired()) {
     mainmenu();
@@ -70,20 +64,20 @@ void loop() {
   if(Serial.available()) {
     checkSerial();
   }
-
-  switch (mode) {
-  case 0: { fire(temp_norm); break; }
-  case 1: { fire(temp_night); break; }
-  case 2: { fire(temp_away); break; }
-  }
 }
 
-void fire(float target_temp, float* sensor_reading) {
-  if(room->sensor_reading <= room->target_temp) {
-    digitalWrite(radPin, HIGH);
+float readSensor(room* inRoom) {
+  float temp;
+  temp = inRoom->sensor_address.readTemperature();
+  return temp;
+}
+
+void fire(room* inRoom) {
+  if(inRoom->sensor_reading <= inRoom->target_temp) {
+    inRoom->heater_state = true;
   }
   else {
-    digitalWrite(radPin, LOW);
+    inRoom->heater_state = false;
   }
 }
 

@@ -1,5 +1,9 @@
 ATAS changelog
 
+-- v0.13
+* Split some functions to separate files.
+* Added basics for rooms.
+
 -- 18.01.2016
 -- v0.12
 * Removed more old code.
