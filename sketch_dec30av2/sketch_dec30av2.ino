@@ -30,14 +30,20 @@ void setup() {
   timer_check.setTimeout(30000);
   timer_check.restart();
   temp_act = tempsens.readTemperature();
+  temp = temp_act;
+  if( temp_act != 998 && temp_act != 999 ) {
+    for( int i=0; i==4; i++) {
+      temp = getAvgTemp( temp_act, temp );
+    }
+  }
 }
 
 void loop() {
   if(timer_check.isExpired()) {
     timer_check.restart();
     temp_act = tempsens.readTemperature();
-    if( temp_act != 998 || temp_act != 999 ) {
-      getAvgTemp( temp_act, temp );
+    if( temp_act != 998 && temp_act != 999 ) {
+      temp = getAvgTemp( temp_act, temp );
     }
   }
   
@@ -52,17 +58,16 @@ void loop() {
     Serial.print(hour());
     Serial.print(F(":"));
     Serial.print(minute());
-    ansiTab();
+    Serial.print(F("  "));
     Serial.print(day());
     Serial.print(F("."));
     Serial.print(month());
     Serial.print(F("."));
     Serial.println(year());
-    Serial.println(F("1.Temperatures  2.Timers  3. Schedules (N/A)  4.Modes  5.Set time"));
+    Serial.println(F("1.Temperatures  2.Timers  3. N/A  4.Modes  5.Set time"));
     Serial.println();
     if(timerset) {
       Serial.print(F("Timer activated, next mode will be: "));
-      ansiTab();
       if(nextmode == 0) {
         Serial.println(F("Normal"));
       }
@@ -74,21 +79,12 @@ void loop() {
       }
       unsigned int minutes_left;
       minutes_left = timer1.getInverseValue() / 60000;
-      Serial.print(F("Time left:"));
-      for( i=0; i==3; i++) {
-        Serial.write(9);
-      }
+      Serial.print(F("Time left: "));
       Serial.println(minutes_left);
     }
     Serial.print(F("Current temperature: "));
-    ansiTab();
-    ansiTab();
-    ansiTab();
     Serial.println(temp);
-    Serial.print(F("Target temperature:"));
-    ansiTab();
-    ansiTab();
-    ansiTab();
+    Serial.print(F("Target temperature: "));
     if(mode == 0) {
       Serial.println(temp_norm);
     }
@@ -99,10 +95,6 @@ void loop() {
       Serial.println(temp_away);
     }
     Serial.print(F("Current mode: "));
-    ansiTab();
-    ansiTab();
-    ansiTab();
-    ansiTab();
     if(mode == 0) {
       Serial.println(F("Normal"));
     }
@@ -157,7 +149,7 @@ void loop() {
 }
 
 void fire( float target_temp, float temp ) {
-  if( temp <= target_temp) {
+  if( temp <= target_temp ) {
     digitalWrite(radPin, HIGH);
     digitalWrite(led, HIGH);
   }
@@ -168,8 +160,8 @@ void fire( float target_temp, float temp ) {
 }
 
 float getAvgTemp( float in_temp, float avg_temp ) {
-  avg_temp -= avg_temp/5.0;
-  avg_temp += in_temp/5.0;
+  avg_temp -= avg_temp/5;
+  avg_temp += in_temp/5;
   return avg_temp;
 }
 
@@ -180,14 +172,11 @@ void menutemps() {
     long temptemp = 0;
     ansiClear();
     ansiHome();
-    Serial.print(F("1. Normal temperature:"));
-    ansiTab();
+    Serial.print(F("1. Normal temperature: "));
     Serial.println(temp_norm);
-    Serial.print(F("2. Night temperature:"));
-    ansiTab();
+    Serial.print(F("2. Night temperature: "));
     Serial.println(temp_night);
-    Serial.print(F("3. Away temperature:"));
-    ansiTab();
+    Serial.print(F("3. Away temperature: "));
     Serial.println(temp_away);
     Serial.println();
     Serial.println(F("Press a number to change, or press x to exit."));
@@ -241,6 +230,7 @@ void menutemps() {
         }  
       case 'x':
         done = true;
+        ansiClear();
         break;
       }
   }
@@ -379,8 +369,6 @@ void menusettime() {
 }
 
 void ansiClear()
-// send ANSI clear screen command
-// used by ANSI output format
 {
   // send ESC [2J
   // which will clear the screen on an ANSI terminal
@@ -399,14 +387,6 @@ void ansiHome()
   Serial.write(27);
   Serial.write(91);
   Serial.write(72);
-}
-
-void ansiTab()
-// send ANSI "tab" character
-// used by ANSI output format
-{
-  // send tab char
-  Serial.write(9);
 }
 
 long getLong()
