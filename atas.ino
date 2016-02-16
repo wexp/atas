@@ -7,7 +7,7 @@ v0.13 DEV
 
 #include <Time.h>
 #include <TimeLib.h>
-#include <HTU21D.h>
+#include <SparkFunHTU21D.h>
 #include <Wire.h>
 #include <RBD_Timer.h>
 
@@ -15,6 +15,7 @@ float temp_norm = 23.0;
 float temp_night = 18.0;
 float temp_away = 12.0;
 
+/*
 struct room
 {
   String room_name;
@@ -25,13 +26,14 @@ struct room
   float target_temperature;
   room* p_next_room;
 };
+*/
 
 const byte led = 13; 
 const byte radPin = 2;
 byte mode;
 byte nextmode;
 float temp = 0;
-HTU21D tempsens;
+//HTU21D tempsens;
 RBD::Timer timer0;
 RBD::Timer timer1;
 RBD::Timer timer_check;
@@ -66,13 +68,13 @@ void loop() {
   }
 }
 
-float readSensor(room* inRoom) {
+float readSensor(Room* inRoom) {
   float temp;
   temp = inRoom->sensor_address.readTemperature();
   return temp;
 }
 
-void fire(room* inRoom) {
+void fire(Room* inRoom) {
   if(inRoom->sensor_reading <= inRoom->target_temp) {
     inRoom->heater_state = true;
   }
