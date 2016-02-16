@@ -2,7 +2,6 @@
 Automatic Temperature Adjustment System, development version
 2015-2016 Erlend Arnesen
 Documentation TBD
-v0.11 DEV
 */
 
 #include <Time.h>
