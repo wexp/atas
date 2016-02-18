@@ -51,7 +51,6 @@ void mainmenu() {
     if(mode == 2) {
       Serial.println(F("Away"));
     }
-  }
 }
 
 void menutemps() {
